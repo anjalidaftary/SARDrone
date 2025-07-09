@@ -1,0 +1,7 @@
+numpy
+opencv-python
+pypng
+pillow
+pyyaml
+reedsolo
+pyserial

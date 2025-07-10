@@ -5,3 +5,5 @@ pillow
 pyyaml
 reedsolo
 pyserial
+scikit-learn
+matplotlib

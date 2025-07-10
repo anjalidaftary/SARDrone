@@ -4,7 +4,7 @@ import digitalio
 import adafruit_rfm9x
 
 RADIO_FREQ_MHZ = 915.0
-BAUD_RATE      = 19200
+BAUD_RATE = 19200
 
 def get_lora_radio():
     spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
@@ -13,7 +13,7 @@ def get_lora_radio():
     
     rfm9x = adafruit_rfm9x.RFM9x(spi, chip_select, reset, RADIO_FREQ_MHZ, baudrate=BAUD_RATE)
     rfm9x.tx_power = 23
-    rfm9x.signal_bandwidth = 500_000
+    rfm9x.signal_bandwidth = 500000
     rfm9x.spreading_factor = 7
     rfm9x.coding_rate = 5
     rfm9x.enable_crc = True

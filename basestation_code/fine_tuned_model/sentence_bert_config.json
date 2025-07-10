@@ -1,4 +1,3 @@
-{
-    "max_seq_length": 256,
-    "do_lower_case": false
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:2713ef7170fbb7e99cf4c4d8a1685642b0454b35f606b0f3b3b23b2786bc0c6c
+size 57

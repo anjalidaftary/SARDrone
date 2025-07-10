@@ -7,3 +7,6 @@ reedsolo
 pyserial
 scikit-learn
 matplotlib
+pycocotools
+pillow
+requests

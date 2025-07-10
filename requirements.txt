@@ -7,3 +7,10 @@ reedsolo
 pyserial
 scikit-learn
 matplotlib
+torch
+torchvision
+transformers
+ftfy
+regex
+tqdm
+Pillow

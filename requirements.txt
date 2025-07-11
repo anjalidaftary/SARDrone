@@ -8,7 +8,6 @@ pyserial
 scikit-learn
 matplotlib
 pycocotools
-pillow
 requests
 torch
 torchvision
@@ -16,8 +15,6 @@ transformers
 ftfy
 regex
 tqdm
-Pillow
 lfs
 adafruit-circuitpython-rfm9x
-adafruit-circuitpython-busio
-adafruit-circuitpython-digitalio
+adafruit-blinka

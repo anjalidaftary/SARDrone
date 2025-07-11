@@ -3,7 +3,7 @@ from sentence_transformers import SentenceTransformer, util
 import torch
 
 # Load sentence-level embedding model 
-model = SentenceTransformer("fine_tuned_model")  # Replace with your fine-tuned model path
+model = SentenceTransformer("fine_tuned_model")  
 
 # Command dictionary
 COMMANDS = {

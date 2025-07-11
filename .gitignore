@@ -1,0 +1,8 @@
+# Drone pictures and data folder
+basestation_code/data/
+drone_code/*.png
+drone_code/*.jpg
+
+# Unzipped file
+basestation_code/instances_train2017.json
+basestation_code/annotations/

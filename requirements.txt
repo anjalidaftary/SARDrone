@@ -17,3 +17,4 @@ ftfy
 regex
 tqdm
 Pillow
+lfs

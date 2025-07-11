@@ -5,5 +5,5 @@ The goal of this project is to create a communication pipeline using a laptop as
 
 1. Initialize virtual environment using ".\venv\Scripts\activate"
 2. Run "pip install -r requirements.txt" for the needed dependencies
-3. Run unzip_annotations.py for data set (MANUALLY DELETE UNZIPPED CONTENT LATER IF NEEDED FOR SOURCE CONTROL)
+3. Run unzip_annotations.py for data set
 n. Run (...)

@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import struct
+from lora_send import send_lora_payload
 
 pca_components = np.load("pca_components.npy")
 pca_mean = np.load("pca_mean.npy")
@@ -15,7 +16,5 @@ pca_vector = np.dot(pca_components, centered)
 scaled = np.clip((pca_vector * 100).astype(np.int16), -128, 127).astype(np.int8)
 payload = scaled.tobytes()
 
-# Send via LoRa (replace with your send call)
-# from lora_module import lora
-# lora.send(payload)
 print("LoRa payload bytes:", payload)
+send_lora_payload(payload)

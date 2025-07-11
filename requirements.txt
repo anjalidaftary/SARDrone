@@ -10,3 +10,10 @@ matplotlib
 pycocotools
 pillow
 requests
+torch
+torchvision
+transformers
+ftfy
+regex
+tqdm
+Pillow

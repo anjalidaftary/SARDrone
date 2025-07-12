@@ -1,15 +1,26 @@
 import joblib
 import numpy as np
-from lora_receive import receive_lora_payload
+import os
+# from lora_receive import receive_lora_payload  # comment out when emulating LoRa
 
-clf = joblib.load("rf_model.pkl")
+BASE_DIR = os.path.dirname(__file__)
+MODEL_PATH = os.path.join(BASE_DIR, "rf_model.pkl")
 
-# Receive LoRa payload (blocking with timeout)
-payload = receive_lora_payload(timeout=10.0)
+clf = joblib.load(MODEL_PATH)
 
-if payload is None:
-    print("No data received. Exiting.")
+# Simulate receiving LoRa payload from file
+# payload = receive_lora_payload(timeout=10.0)   # ←comment out when emulating LoRa
+try:
+    with open("pca_payload.bin", "rb") as f:
+        payload = f.read()
+except FileNotFoundError:
+    print("pca_payload.bin not found.")
     exit()
+
+# comment out when emulating LoRa
+# if payload is None:
+#     print("No data received. Exiting.")
+#     exit()
 
 # Convert bytes back to PCA vector
 vector = np.frombuffer(payload, dtype=np.int8).astype(np.float32) / 100.0
@@ -20,6 +31,6 @@ label = clf.predict(pca_vector)[0]
 prob = clf.predict_proba(pca_vector)[0][1]
 
 if label == 1:
-    print(f"Person Detected! Confidence: {prob:.2f}")
+    print(f"🚨 Person Detected! Confidence: {prob:.2f}")
 else:
     print(f"No Person Detected. Confidence: {1 - prob:.2f}")

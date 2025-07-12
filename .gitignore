@@ -3,6 +3,10 @@ basestation_code/data/
 drone_code/*.png
 drone_code/*.jpg
 
-# Unzipped file
+# Unzipped file and un-needed data
 basestation_code/instances_train2017.json
-basestation_code/annotations/
+/drone_code/pca_components.npy
+/drone_code/pca_mean.npy
+/basestation_code/pca_components.npy
+/basestation_code/pca_mean.npy
+/pca_payload.bin

@@ -7,7 +7,7 @@ model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
 # Load and preprocess image
-image = Image.open("path_to_your_image.jpg")
+image = Image.open("basestation_code/sample_image.JPG")
 
 # Text prompts
 texts = ["a photo of a human", "no humans in this image"]

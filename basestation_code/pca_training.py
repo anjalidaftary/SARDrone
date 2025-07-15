@@ -38,7 +38,7 @@ if X.ndim != 2 or X.shape[0] < 2:
     print("ERROR: Need at least 2 images to train PCA")
     sys.exit(1)
 
-pca = PCA(n_components=20)
+pca = PCA(n_components=30)
 X_pca = pca.fit_transform(X)
 
 np.save(os.path.join(BASE_DIR, "pca_components.npy"), pca.components_)

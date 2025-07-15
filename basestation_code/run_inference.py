@@ -1,6 +1,7 @@
 import joblib
 import numpy as np
 import os
+from sklearn.preprocessing import normalize
 # from lora_receive import receive_lora_payload  # comment out when emulating LoRa
 
 BASE_DIR = os.path.dirname(__file__)
@@ -25,12 +26,14 @@ except FileNotFoundError:
 # Convert bytes back to PCA vector
 vector = np.frombuffer(payload, dtype=np.int8).astype(np.float32) / 100.0
 pca_vector = vector.reshape(1, -1)
+# pca_vector = normalize(pca_vector)
 
 # Run inference
 label = clf.predict(pca_vector)[0]
 prob = clf.predict_proba(pca_vector)[0][1]
 
-if label == 1:
+if prob > 0.75:
     print(f"🚨 Person Detected! Confidence: {prob:.2f}")
 else:
     print(f"No Person Detected. Confidence: {1 - prob:.2f}")
+

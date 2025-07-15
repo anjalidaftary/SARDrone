@@ -1,19 +1,34 @@
+# File: receive_image.py
+import base64
+import zlib
 from lora_setup import get_lora_radio
 
-def receive_lora_payload(timeout=10.0):
-    """
-    Receives a LoRa payload within a timeout (seconds).
-    Returns: bytes or None
-    """
+radio = get_lora_radio()
+received = ""
+
+print("📡 Receiving packets...")
+while True:
+    packet = radio.receive(timeout=5.0)
+    if packet is None:
+        print("No more packets. Ending reception.")
+        break
     try:
-        rfm9x = get_lora_radio()
-        print("Waiting for incoming payload...")
-        packet = rfm9x.receive(timeout=timeout)
-        if packet is None:
-            print("No payload received.")
-            return None
+        received += packet.decode("ascii")
         print(f"Received {len(packet)} bytes.")
-        return packet
-    except Exception as e:
-        print(f"LoRa receive error: {e}")
-        return None
+    except UnicodeDecodeError:
+        print("Bad packet. Skipping.")
+
+# === Decode ===
+try:
+    raw_data = base64.b16decode(received)
+    try:
+        decompressed = zlib.decompress(raw_data)
+        with open("received_image.png", "wb") as f:
+            f.write(decompressed)
+        print("Saved decompressed image as received_image.png")
+    except zlib.error:
+        with open("received_image.png", "wb") as f:
+            f.write(raw_data)
+        print("Saved raw (uncompressed) image as received_image.png")
+except Exception as e:
+    print(f"Failed to decode image: {e}")

@@ -29,4 +29,7 @@ for i, chunk in enumerate(chunks):
     print(f"[{i+1}/{len(chunks)}] Sending {len(chunk)} chars...")
     radio.send(bytes(chunk, "ascii"))
 
+# === Send final token to signal end of stream ===
+radio.send(b"END_OF_STREAM")
+
 print("Done sending image.")

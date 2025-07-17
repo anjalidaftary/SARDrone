@@ -21,8 +21,10 @@ def capture_photo(save_directory="img", filename="input.png"):
             "-o", photo_path,
             "--width", "160",
             "--height", "120",
+            "--encoding", "png",
             "-t", "100"
         ], check=True)
+        time.sleep(0.5)
         print("Image saved.")
         return photo_path
     except subprocess.CalledProcessError as e:

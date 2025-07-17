@@ -17,7 +17,7 @@ def get_lora_radio():
     rfm9x.spreading_factor = 7
     rfm9x.coding_rate = 5
     rfm9x.enable_crc = True
-    #rfm9x.preamble_length = 6
+    rfm9x.preamble_length = 6
 
     print("LoRa transceiver is initialized and tuned.")
     return rfm9x

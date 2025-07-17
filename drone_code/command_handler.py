@@ -47,7 +47,6 @@ class HelpCommand(Command):
         handler.send_response(response)
         handler.send_final_token()
 
-
 class HistoryCommand(Command):
     name = "HISTORY"
 

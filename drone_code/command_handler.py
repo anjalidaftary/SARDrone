@@ -216,7 +216,7 @@ class CameraCommand(Command):
         try:
             image_path = None
             while image_path is None:
-                image_path = capture_photo(width=64, height=64, fmt="png")
+                image_path = capture_photo()
                 if image_path is None:
                     print("Retrying capture...")
                     time.sleep(1)

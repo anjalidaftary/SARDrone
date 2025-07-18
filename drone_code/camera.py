@@ -2,57 +2,37 @@ import os
 import subprocess
 import time
 
-def capture_photo(save_directory="img", filename="input.png"):
+def capture_photo(
+    save_directory="img",
+    filename="input.png",
+    width=64,
+    height=64,  
+    fmt="png"    
+):
+    """
+    Capture a photo using libcamera-still with specified resolution and encoding.
+    """
+    # Create folder if needed
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
     photo_path = os.path.join(save_directory, filename)
 
+    cmd = [
+        "libcamera-still",
+        "-o", photo_path,
+        "--width",  str(width),
+        "--height", str(height),
+        "--encoding", fmt,
+        "-t", "100"
+    ]
+
     try:
-        print(f"Capturing image to {photo_path}...")
-        subprocess.run([
-            "libcamera-still",
-            "-o", photo_path,
-            "--width", "160",
-            "--height", "120",
-            "--encoding", "png",
-            "-t", "100"
-        ], check=True)
-        time.sleep(0.5)
-        print("Image saved.")
+        print(f"Capturing image to {photo_path} at {width}x{height} as {fmt}...")
+        subprocess.run(cmd, check=True)
+        time.sleep(0.2)
+        print(f"Image saved to {photo_path}")
         return photo_path
     except subprocess.CalledProcessError as e:
-        print("libcamera-still failed:", e)
+        print(f"[capture_photo] libcamera-still failed: {e}")
         return None
-
-def _manage_photo_count(directory, max_photos=3):
-    """
-    Ensures the number of photos in the directory does not exceed the specified max_photos.
-    Deletes the oldest photo(s) if the count exceeds max_photos.
-    Args:
-        directory (str): Directory containing the photos.
-        max_photos (int): Maximum number of photos to keep.
-    """
-    try:
-        # Get all files in the directory sorted by creation time (oldest first)
-        files = sorted(
-            [os.path.join(directory, f) for f in os.listdir(directory)],
-            key=os.path.getctime
-        )
-
-        # Check if the number of files exceeds the max_photos
-        if len(files) > max_photos:
-            # Calculate how many files to delete
-            excess_files = len(files) - max_photos
-
-            # Delete the oldest files
-            for file_to_delete in files[:excess_files]:
-                try:
-                    os.remove(file_to_delete)
-                    print(f"Deleted old photo: {file_to_delete}")
-                except Exception as e:
-                    print(f"Failed to delete {file_to_delete}: {e}")
-    except Exception as e:
-        print(f"Error managing photo count in directory '{directory}': {e}")
-
-# capture_photo()

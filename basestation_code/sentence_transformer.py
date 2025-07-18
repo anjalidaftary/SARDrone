@@ -16,8 +16,7 @@ COMMANDS = {
     "stop": ["stop", "hover", "pause", "halt"]
 }
 
-DISTANCE_UNITS = ["meter", "meters", "m"]
-ANGLE_UNITS = ["degree", "degrees", "°"]
+TIME_UNITS = ["second", "seconds", "sec", "s"]
 
 # Pre-encode all command phrases
 all_phrases = []
@@ -53,10 +52,8 @@ def classify_phrase(text, threshold=0.4):
         value = None
 
         # Extract value based on command type
-        if label in ["forward", "backward", "ascend", "descend"]:
-            value = extract_value(text, DISTANCE_UNITS)
-        elif label in ["turn_left", "turn_right"]:
-            value = extract_value(text, ANGLE_UNITS)
+        if label in ["forward", "backward", "ascend", "descend", "turn_left", "turn_right"]:
+            value = extract_value(text, TIME_UNITS)
 
         return {"command": label, "value": value, "confidence": best_score}
     else:

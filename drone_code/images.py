@@ -67,7 +67,7 @@ def convert_image(image_path, bit_depth=4, size=(256, 256), dithering=False):
                 new_pixel = int(new_pixel_val * (255 // max_val))
                 error = old_pixel - new_pixel
                 image[y][x] = new_pixel
-
+ 
                 # Distribute error
                 if x+1 < width:
                     image[y][x+1] = clip(image[y][x+1] + error * 7 / 16)
@@ -104,3 +104,9 @@ def convert_image(image_path, bit_depth=4, size=(256, 256), dithering=False):
     b64 = base64.b64encode(compressed).decode('ascii')
     print(f"Image converted successfully. Base64 length: {len(b64)}")
     return b64
+
+def convert_binary(image_path):
+    with open(image_path, "rb") as f:
+        data = f.read()
+    print(f"Binary image loaded: {len(data)} bytes")
+    return data

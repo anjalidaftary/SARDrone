@@ -1,6 +1,6 @@
 import threading
 from speech_to_text import transcribe_audio
-from nl_to_text.ft_gpt2 import generate_flight_plan
+from ft_gpt2 import generate_flight_plan
 import whisper
 import warnings
 import time

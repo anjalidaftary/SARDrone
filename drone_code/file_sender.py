@@ -1,60 +1,36 @@
-'''
-import os
-import base64
-import zlib
-from lora_setup import get_lora_radio
-
-# === SETTINGS ===
-IMAGE_PATH = "input.png"
-USE_COMPRESSION = False  # Set to True for compressed mode
-CHUNK_SIZE = 200  # How many bytes per LoRa packet
-
-# === Load and (optionally) compress image ===
-with open(IMAGE_PATH, "rb") as f:
-    data = f.read()
-    print(f"Original size: {len(data)} bytes")
-    if USE_COMPRESSION:
-        data = zlib.compress(data, level=9)
-        print(f"Compressed size: {len(data)} bytes")
-
-# === Encode to base16 (hex) ===
-hex_data = base64.b16encode(data).decode("ascii")
-
-# === Send in chunks ===
-radio = get_lora_radio()
-chunks = [hex_data[i:i+CHUNK_SIZE] for i in range(0, len(hex_data), CHUNK_SIZE)]
-
-print(f"📡 Sending {len(chunks)} packets...")
-for i, chunk in enumerate(chunks):
-    print(f"[{i+1}/{len(chunks)}] Sending {len(chunk)} chars...")
-    radio.send(bytes(chunk, "ascii"))
-
-# === Send final token to signal end of stream ===
-radio.send(b"END_OF_STREAM")
-
-print("Done sending image.")
-'''
 import time
-import math
 
-def send_file(hex_data, handler):
+def send_file(b64_data, handler):
     """
-    Sends a base16 (hex) encoded string over LoRa using the provided handler.
-    Each packet contains handler.max_packet_size bytes = max_packet_size hex characters.
+    Sends a Base64-encoded string over LoRa in text mode.
     """
-    packet_list = [hex_data[i:i + handler.max_packet_size] for i in range(0, len(hex_data), handler.max_packet_size)]
-    
-    print(f"Total packets to send: {len(packet_list)}")
-
-    # set delay before sending ACK
-    handler.rfm9x.ack_delay = 0.1
-    # set node addresses
-    handler.rfm9x.node = 1
+    packets = [b64_data[i : i + handler.max_packet_size]
+               for i in range(0, len(b64_data), handler.max_packet_size)]
+    handler.rfm9x.ack_delay   = 0.1
+    handler.rfm9x.node        = 1
     handler.rfm9x.destination = 2
 
-    for packet in packet_list:
-        print(packet.encode('ascii'))
-        handler.rfm9x.send_with_ack(packet.encode('ascii'))
+    print(f"Total text packets: {len(packets)}")
+    for pkt in packets:
+        handler.rfm9x.send_with_ack(pkt.encode('ascii'))
+        time.sleep(0.1)
+
+    return True
+
+
+def send_binary(data_bytes, handler):
+    """
+    Sends raw binary data (e.g., PNG or NPZ) over LoRa.
+    """
+    packets = [data_bytes[i : i + handler.max_packet_size]
+               for i in range(0, len(data_bytes), handler.max_packet_size)]
+    handler.rfm9x.ack_delay   = 0.1
+    handler.rfm9x.node        = 1
+    handler.rfm9x.destination = 2
+
+    print(f"Total binary packets: {len(packets)}")
+    for pkt in packets:
+        handler.rfm9x.send_with_ack(pkt)
         time.sleep(0.1)
 
     return True

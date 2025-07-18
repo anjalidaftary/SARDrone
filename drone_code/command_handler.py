@@ -3,8 +3,8 @@ import subprocess
 from subprocess import STDOUT, check_output
 import time
 from datetime import datetime
-from images import convert_image
-from file_sender import send_file
+from images import convert_image, convert_binary
+from file_sender import send_file, send_binary
 import math
 import zlib
 from camera import capture_photo
@@ -211,41 +211,39 @@ class ScreenshotCommand(Command):
 
 class CameraCommand(Command):
     name = "CAMERA"
-    
+
     def execute(self, args, handler):
         try:
-            
-            import time
+            image_path = None
+            while image_path is None:
+                image_path = capture_photo(width=64, height=64, fmt="png")
+                if image_path is None:
+                    print("Retrying capture...")
+                    time.sleep(1)
 
-            while True:
-                image_path = capture_photo()
-                if image_path:
-                    break  
-                print("Retrying capture...")
-                time.sleep(1)  
+            # Chooses pipeline: text/Base64 or raw binary
+            mode = args[0].lower() if args else "text"
 
-            image_path = capture_photo()
-            
-            # Set image parameters – adjust as needed.
-            bit_depth = 4
-            size = (64, 64)
-            
-            # Load, dither, and pack image bits (returns a bytearray)
-            hex_data = convert_image(image_path, bit_depth=bit_depth, size=size, dithering=False)
-            if not hex_data:
-                handler.send_response("Image conversion failed", handler.rfm9x)
-                return
-            
-            with open("terminal.txt", "w") as f:
-                f.write(hex_data)
-            
-            handler.send_response(f"Sending an {size} {bit_depth}bpp image")
-            # # Send the file using file_sender's send_file function
-            if send_file(hex_data, handler):
-                handler.send_response("SCREENSHOT SENT", handler.rfm9x)
+            if mode == "text":
+                bit_depth = 4
+                size = (64, 64)
+                b64 = convert_image(image_path, bit_depth=bit_depth, size=size)
+                if not b64:
+                    return handler.send_response("Image conversion failed", handler.rfm9x)
+
+                handler.send_response(f"Sending text image {size}, {bit_depth}bpp", handler.rfm9x)
+                success = send_file(b64, handler)
+                handler.send_response("SCREENSHOT SENT" if success else "SEND FAILED", handler.rfm9x)
+
+            elif mode == "binary":
+                data = convert_binary(image_path)
+                handler.send_response(f"Sending binary image ({len(data)} bytes)", handler.rfm9x)
+                success = send_binary(data, handler)
+                handler.send_response("BINSCREEN SENT" if success else "SEND FAILED", handler.rfm9x)
+
             else:
-                handler.send_response("Failed to send screenshot", handler.rfm9x)
-                
+                handler.send_response("Usage: CAMERA [text|binary]", handler.rfm9x)
+
         except Exception as e:
             handler.send_response(f"[SCREENSHOT ERROR] {e}", handler.rfm9x)
 

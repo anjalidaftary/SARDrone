@@ -1,10 +1,4 @@
 import os
-try:
-    import cv2
-except ImportError:
-    cv2 = None
-    print("Warning: OpenCV (cv2) is not installed. Some features may not work.")
-
 import subprocess
 import time
 
@@ -28,7 +22,7 @@ def capture_photo(save_directory="img", filename="input.png"):
         print("Image saved.")
         return photo_path
     except subprocess.CalledProcessError as e:
-        print("[capture_photo] libcamera-still failed:", e)
+        print("libcamera-still failed:", e)
         return None
 
 def _manage_photo_count(directory, max_photos=3):

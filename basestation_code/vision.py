@@ -2,7 +2,7 @@ import subprocess
 import json
 import os
 
-image = 'images2.jpg'
+image = 'test_image.jpg'
 output_image = 'output_overhead.png'
 prediction_json = 'your_image.jpg.predictions.json'
 

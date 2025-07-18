@@ -1,36 +1,47 @@
 import time
+import zlib
+import base64
+import binascii
 
+# Text (Base64) pipeline
 def send_file(b64_data, handler):
     """
     Sends a Base64-encoded string over LoRa in text mode.
     """
-    packets = [b64_data[i : i + handler.max_packet_size]
-               for i in range(0, len(b64_data), handler.max_packet_size)]
     handler.rfm9x.ack_delay   = 0.1
     handler.rfm9x.node        = 1
     handler.rfm9x.destination = 2
 
-    print(f"Total text packets: {len(packets)}")
+    packets = [
+        b64_data[i : i + handler.max_packet_size]
+        for i in range(0, len(b64_data), handler.max_packet_size)
+    ]
+    print(f"[SEND] {len(packets)} Base64 packets")
     for pkt in packets:
         handler.rfm9x.send_with_ack(pkt.encode('ascii'))
         time.sleep(0.1)
-
     return True
 
-
+# Binary pipeline (hex‑encode before sending)
 def send_binary(data_bytes, handler):
     """
-    Sends raw binary data (e.g., PNG or NPZ) over LoRa.
+    Compresses, hex‑encodes, and sends raw binary data over LoRa.
     """
-    packets = [data_bytes[i : i + handler.max_packet_size]
-               for i in range(0, len(data_bytes), handler.max_packet_size)]
     handler.rfm9x.ack_delay   = 0.1
     handler.rfm9x.node        = 1
     handler.rfm9x.destination = 2
 
-    print(f"Total binary packets: {len(packets)}")
-    for pkt in packets:
-        handler.rfm9x.send_with_ack(pkt)
-        time.sleep(0.1)
+    # First compress the raw bytes
+    compressed = zlib.compress(data_bytes)
+    # Then hex‑encode to get a printable string
+    hex_str = binascii.hexlify(compressed).decode('ascii')
 
+    packets = [
+        hex_str[i : i + handler.max_packet_size]
+        for i in range(0, len(hex_str), handler.max_packet_size)
+    ]
+    print(f"[SEND] {len(packets)} hex‑encoded packets ({len(hex_str)} chars)")
+    for pkt in packets:
+        handler.rfm9x.send_with_ack(pkt.encode('ascii'))
+        time.sleep(0.1)
     return True

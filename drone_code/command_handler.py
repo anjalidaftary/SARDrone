@@ -8,6 +8,7 @@ from file_sender import send_file, send_binary
 import math
 import zlib
 from camera import capture_photo
+from inference import run_inference
 import csv
 import threading
 import requests
@@ -150,64 +151,37 @@ class ConfigCommand(Command):
         handler.send_response(response)
         handler.send_final_token()
 
-class ScreenshotCommand(Command):
-    name = "SCREENSHOT"
-    
+class DetectCommand(Command):
+    name = "DETECT"
+
     def execute(self, args, handler):
+        # 1) Capture an image
+        img_path = None
+        while img_path is None:
+            img_path = capture_photo(width=640, height=480, fmt="jpg")
+            if img_path is None:
+                time.sleep(0.5)
+
+        handler.send_response(f"[INFO] Image saved at {img_path}", handler.rfm9x)
+
+        # 2) Run TFLite inference
         try:
-            # Set image parameters – adjust as needed.
-            bit_depth = 4
-            size = (128, 128)
-            
-            # Save the original max packet size or default to 128
-            original_max_packet_size = getattr(handler, "max_packet_size", 128)
-            max_packet_size = original_max_packet_size
+            handler.send_response("[INFO] Running inference...", handler.rfm9x)
+            crop_paths = run_inference(img_path, output_dir="crops", conf_threshold=0.5)
 
-            # If a second argument is provided, try to use it as the new packet size
-            if len(args) > 1:
-                try:
-                    max_packet_size = int(args[1])
-                except ValueError:
-                    handler.send_response("Invalid packet size. Must be an integer.", handler.rfm9x)
-                    handler.send_final_token()
-                    return
-
-            # Temporarily override handler.max_packet_size
-            handler.max_packet_size = max_packet_size
-
-            # Determine the image path
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            image_path = os.path.join(script_dir, "img", args[0])
-            
-            # Load, dither, and pack image bits (returns a bytearray)
-            hex_data = convert_image(image_path, bit_depth=bit_depth, size=size, dithering=False)
-            if not hex_data:
-                handler.send_response("Image conversion failed", handler.rfm9x)
-                return
-            
-            # Optionally write to terminal log
-            with open("terminal.txt", "w") as f:
-                f.write(hex_data)
-            
-            handler.send_response(f"Sending an {size} {bit_depth}bpp image in {max_packet_size}-byte chunks")
-
-            # Send the image data
-            if send_file(hex_data, handler):
-                # handler.send_response("SCREENSHOT SENT", handler.rfm9x)
-                handler.send_final_token()
+            if not crop_paths:
+                handler.send_response("[RESULT] No persons detected", handler.rfm9x)
             else:
-                handler.send_response("Failed to send screenshot", handler.rfm9x)
-                handler.send_final_token()
-
-            # Restore the original packet size
-            handler.max_packet_size = original_max_packet_size
-            # handler.send_final_token()
-                
+                # Send back each crop filename and size
+                for cp in crop_paths:
+                    size = os.path.getsize(cp)
+                    handler.send_response(f"[CROP] {os.path.basename(cp)} ({size} bytes)", handler.rfm9x)
+                    # Optionally: you could chunk-and-send the actual crop here
+                handler.send_response("[RESULT] DETECTION COMPLETE", handler.rfm9x)
         except Exception as e:
-            # Restore even if there's an error
-            handler.max_packet_size = original_max_packet_size
-            handler.send_response(f"[SCREENSHOT ERROR] {e}", handler.rfm9x)
-            handler.send_final_token()
+            handler.send_response(f"[ERROR] Inference failed: {e}", handler.rfm9x)
+
+        handler.send_final_token()
 
 class CameraCommand(Command):
     name = "CAMERA"
@@ -342,7 +316,7 @@ class CommandHandler:
             HistoryCommand(),
             EchoCommand(),
             ConfigCommand(),
-            ScreenshotCommand(),
+            DetectCommand(),
             CameraCommand(),
             ResendCommand(), 
             RunCommand(),

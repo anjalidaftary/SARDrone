@@ -5,7 +5,7 @@ import base64
 import binascii
 import png
 
-LOG = "../terminal.txt"
+LOG = "./terminal.txt"
 OUT_B64 = "reconstructed_text.png"
 OUT_BIN = "reconstructed_binary.png"
 

@@ -10,3 +10,6 @@ basestation_code/instances_train2017.json
 /basestation_code/pca_components.npy
 /basestation_code/pca_mean.npy
 /pca_payload.bin
+
+# Virtual environment
+.venv/

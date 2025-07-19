@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
-LOG_PATH = Path(__file__).resolve().parent.parent / "terminal.txt"
+LOG_PATH = Path(__file__).resolve().parent / "terminal.txt"
 
 def log_to_file(message):
     try:

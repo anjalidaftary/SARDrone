@@ -1,5 +1,7 @@
 from serial.tools import list_ports
 from logger import log_to_file
+from pathlib import Path
+import re
 
 def find_adafruit_port():
     ports = list(list_ports.comports())
@@ -15,6 +17,16 @@ def find_adafruit_port():
         return candidates[0].device
     elif len(candidates) > 1:
         ports = candidates  # prompt only on the filtered list
+
+    # Specific search for Feather
+    LOG_PATH = Path(__file__).resolve().parent.parent / "terminal.txt"
+    pattern = r"\b(\d+):\s*/dev/cu\.usbmodem\d+.*Feather RP2040 RFM"
+    with open(LOG_PATH, "r") as f:
+        for line in f:
+            match = re.search(pattern, line)
+            if match:
+                print(f"[DEBUG] Match found.")
+                return ports[int(match.group(1))].device
 
     # Fallback to interactive selection
     print("[INFO] Multiple serial ports found:")

@@ -1,0 +1,44 @@
+2025-07-18 15:53:34.909    [INFO] Connected to /dev/cu.usbmodem14401 at 115200 baud.
+2025-07-18 15:53:34.913    [INFO] Connected to /dev/cu.usbmodem14401 at 115200 baud.
+2025-07-18 15:53:39.525    [INFO] Keyboard interrupt received. Exiting...
+2025-07-18 15:53:39.547    [INFO] Serial port closed.
+2025-07-18 15:59:34.634    [INFO] Connected to /dev/cu.usbmodem14401 at 115200 baud.
+2025-07-18 15:59:34.638    [INFO] Connected to /dev/cu.usbmodem14401 at 115200 baud.
+2025-07-18 16:01:42.727    [SEND] CAMERA text
+2025-07-18 16:01:42.740    [FEATHER] CAMERA text
+2025-07-18 16:01:42.741    [FEATHER] [TX] Sending (11 bytes): CAMERA text
+2025-07-18 16:02:00.422    [INFO] Keyboard interrupt received. Exiting...
+2025-07-18 16:02:00.438    [INFO] Serial port closed.
+2025-07-18 16:02:06.300    [INFO] 0: /dev/cu.usbmodem14401 - Feather RP2040 RFM - CircuitPython CDC data
+2025-07-18 16:02:06.300    [INFO] 1: /dev/cu.usbmodem14101 - Gadget Serial v2.4 - CDC ACM Data
+2025-07-18 16:02:34.229    [INFO] Connected to /dev/cu.usbmodem14101 at 115200 baud.
+2025-07-18 16:02:34.232    [INFO] Connected to /dev/cu.usbmodem14101 at 115200 baud.
+2025-07-18 16:02:40.681    [SEND] CAMERA text
+2025-07-18 16:02:40.729    [FEATHER] CAMERA text
+2025-07-18 16:03:11.929    [INFO] Keyboard interrupt received. Exiting...
+2025-07-18 16:03:11.960    [INFO] Serial port closed.
+2025-07-18 16:03:16.012    [INFO] 0: /dev/cu.usbmodem14401 - Feather RP2040 RFM - CircuitPython CDC data
+2025-07-18 16:03:16.013    [INFO] 1: /dev/cu.usbmodem14101 - Gadget Serial v2.4 - CDC ACM Data
+2025-07-18 16:03:26.090    [INFO] Connected to /dev/cu.usbmodem14401 at 115200 baud.
+2025-07-18 16:03:26.093    [INFO] Connected to /dev/cu.usbmodem14401 at 115200 baud.
+2025-07-18 16:03:33.186    [INFO] Keyboard interrupt received. Exiting...
+2025-07-18 16:03:33.203    [INFO] Serial port closed.
+2025-07-18 16:10:47.219    [INFO] 0: /dev/cu.usbmodem14101 - Gadget Serial v2.4 - CDC ACM Data
+2025-07-18 16:10:47.219    [INFO] 1: /dev/cu.usbmodem14401 - Feather RP2040 RFM - CircuitPython CDC data
+2025-07-18 16:10:54.750    [INFO] Connected to /dev/cu.usbmodem14401 at 115200 baud.
+2025-07-18 16:10:54.755    [INFO] Connected to /dev/cu.usbmodem14401 at 115200 baud.
+2025-07-18 16:11:03.057    [SEND] CAMERA text
+2025-07-18 16:11:03.072    [FEATHER] CAMERA text
+2025-07-18 16:11:03.072    [FEATHER] [TX] Sending (11 bytes): CAMERA text
+2025-07-18 16:11:10.318    [FEATHER] [RECEIVED #1] [33 bytes]: Sending text image (64, 64), 4bpp
+2025-07-18 16:11:10.531    [FEATHER] [RECEIVED #2] [128 bytes]: eJyFlO2BnCAQhqEDhlQgpIEspoFbvQJyJ1tAsuw1ELUDKTsDgwrobubHijwz73zA6r1fJp/ZNDnrHriJNjoXtpZ5x8u8jANuRz65O8VkHN/uzs2JD74SiNy6L+L3wVcO
+2025-07-18 16:11:10.906    [FEATHER] [RECEIVED #3] [128 bytes]: uFhGLKDke4YnfHVY4joUEPm48ZThGZ+WEV+TTExQ8Km3n719zJ5UtgJG6t//Vmi6vaUsIyaYqEDS+wFoCnR382sBxF3EvyCZUu+zzzsMPGDGOIDgUsnvj6JAv/x5C5hx
+2025-07-18 16:11:11.277    [FEATHER] [RECEIVED #4] [128 bytes]: DsFF6hv2EI6I+PTRgEDM0EdwlFCtaW/bBMY3okEfF1wwTKH0+zahREkAOUilpDb9WgDLDEJs/2niLGzimYA0FwV2Gq/GKP3T1fHIVQM6OPTDtT1wJo1GadPae2udowKK
+2025-07-18 16:11:11.604    [FEATHER] [RECEIVED #5] [128 bytes]: /Epf264bBvfRp/Jq3nam7Xr7tx3sSf2AXGn0GHSXHHLOQWEHyqAp03U2zLjiKpwhto9OqGJdxZsm4uiCDihRcoyWOIMwZHQwXT+w0oF/A0AOjUwKBeYQmtjuUlB4zmMl
+2025-07-18 16:11:11.977    [FEATHER] [RECEIVED #6] [128 bytes]: puaQGyap8xccSg7/56J0kKpSr3i82QkyOLNsdC/4AcuGnul2HrC+ZOHHaG2ajNcUx0rhjeAHLOPYL7Qb+DE6GG3Tny7rZl0osfNdQdRiB161wssGct/oeuT7OouPqgKy
+2025-07-18 16:11:12.291    [FEATHER] [RECEIVED #7] [112 bytes]: WYr4ZHyf/+pHzvQ9y/h+TvQT4rN9vnNBavS92u7HesVibNI/4TxNSbzgsQJyZPyMi/AdfMn35xlPMzjjxQEK+uge4/fjqOOhin+FI/8H/LVIVQ==
+2025-07-18 16:11:12.502    [FEATHER] [RECEIVED #8] [15 bytes]: SCREENSHOT SENT
+2025-07-18 16:11:28.376    [FEATHER] [RX] Timeout: No packets received for 15.0 seconds.
+2025-07-18 16:11:28.376    [FEATHER] [RX] Total packets received (excluding final token): 8
+2025-07-18 16:12:01.834    [INFO] Keyboard interrupt received. Exiting...
+2025-07-18 16:12:01.846    [INFO] Serial port closed.

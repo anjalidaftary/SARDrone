@@ -1,6 +1,7 @@
 import time
 import serial
 import threading
+import time
 import re
 
 from script_handler    import ScriptRunner
@@ -129,6 +130,15 @@ class SerialInterface:
         except KeyboardInterrupt:
             print("\n[INFO] Keyboard interrupt received. Exiting...")
             log_to_file("[INFO] Keyboard interrupt received. Exiting...")
+        finally:
+            self.close()
+
+    def camera_capture(self):
+        try:
+            self.send_command("CAMERA text")
+            with open(LOG_FILE, "r") as f:
+                while "SCREENSHOT SENT" not in f.read():
+                    time.sleep(0.5)
         finally:
             self.close()
 

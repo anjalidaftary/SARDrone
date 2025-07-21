@@ -10,7 +10,7 @@ _interpreter.allocate_tensors()
 _input_details  = _interpreter.get_input_details()
 _output_details = _interpreter.get_output_details()
 
-def preprocess_image(img_path, target_size=(640, 480)):
+def preprocess_image(img_path, target_size=(640, 640)):
     img = Image.open(img_path).convert("RGB").resize(target_size)
     arr = np.array(img, dtype=np.float32) / 255.0
     return np.expand_dims(arr, axis=0), img

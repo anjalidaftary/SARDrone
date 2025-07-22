@@ -26,22 +26,30 @@ def compute_iou(box1, box2):
     return inter / (a1 + a2 - inter + 1e-6)
 
 def postprocess(output_data, original_image, conf_thresh=0.5):
+    """Extract person crops from model output"""
     w, h = original_image.size
     crops = []
-    predictions = output_data[0]
 
-    for det in predictions:
-        if len(det) < 6:
-            continue  # skip invalid rows
+    output = output_data[0]  # should be shape (N, 6) or (N, 85) depending on model
+    print(f"[DEBUG] Output shape: {output.shape}")
 
-        x_center, y_center, box_w, box_h = det[0:4]
-        obj_conf = det[4]
-        class_probs = det[5:]
+    for det in output:
+        # If using YOLO-style model with [x, y, w, h, obj_conf, ...class_probs]
+        if len(det) > 6:
+            x_center, y_center, box_w, box_h = map(float, det[:4])
+            obj_conf = float(det[4])
+            class_probs = det[5:]
 
-        class_id = int(np.argmax(class_probs))
-        class_score = float(class_probs[class_id])
+            class_id = int(np.argmax(class_probs))
+            class_score = float(class_probs[class_id])
+            conf = obj_conf * class_score
 
-        conf = float(obj_conf) * class_score
+            print(f"[DEBUG] Det: conf={conf:.2f}, class_id={class_id}, obj_conf={obj_conf:.2f}, class_score={class_score:.2f}")
+        else:
+            # If already of form [x_center, y_center, w, h, conf, class_id]
+            x_center, y_center, box_w, box_h, conf, class_id = det
+            conf = float(conf)
+            class_id = int(class_id)
 
         if conf > conf_thresh and class_id == 0:  # class 0 = person
             x1 = int((x_center - box_w / 2) * w)

@@ -155,13 +155,13 @@ class DetectCommand(Command):
     name = "DETECT"
 
     def execute(self, args, handler):
-        # capture image
+        # capture an image from the camera
         img_path = None
         while img_path is None:
             img_path = capture_photo(width=640, height=640, fmt="jpg")
         handler.send_response(f"[INFO] Captured {img_path}", handler.rfm9x)
 
-        # inference & cropping
+        # run inference and crop detections
         try:
             handler.send_response("[INFO] Running inference...", handler.rfm9x)
             crop_paths = run_inference(img_path)
@@ -175,6 +175,7 @@ class DetectCommand(Command):
         except Exception as e:
             handler.send_response(f"[ERROR] Inference failed: {e}", handler.rfm9x)
 
+        # signal end of transmission
         handler.send_final_token()
 
 

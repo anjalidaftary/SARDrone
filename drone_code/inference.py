@@ -17,14 +17,14 @@ def preprocess_image(img_path, target_size=(640, 640)):
     return np.expand_dims(arr, 0), img, target_size
 
 def postprocess(output_data, original_image, resized_size, conf_thresh=0.5, iou_thresh=0.4):
-    """Crop out all 'person' detections from a YOLO‑style output."""
+    """
+    Parse YOLO output and return ALL valid person crops without going out of bounds.
+    """
     orig_w, orig_h = original_image.size
     in_w, in_h = resized_size
+    preds = output_data[0]
 
-    preds = output_data[0]  # shape: (25200,85)
     detections = []
-
-    # 1) Gather all person boxes above threshold
     for det in preds:
         x_c, y_c, w_box, h_box = det[0:4].astype(float)
         obj_conf = float(det[4])
@@ -34,39 +34,48 @@ def postprocess(output_data, original_image, resized_size, conf_thresh=0.5, iou_
         conf = obj_conf * class_score
 
         if class_id == 0 and conf > conf_thresh:
-            x1 = int((x_c - w_box/2) * orig_w / in_w)
-            y1 = int((y_c - h_box/2) * orig_h / in_h)
-            x2 = int((x_c + w_box/2) * orig_w / in_w)
-            y2 = int((y_c + h_box/2) * orig_h / in_h)
+            # scale to original image
+            x1 = (x_c - w_box/2) * orig_w / in_w
+            y1 = (y_c - h_box/2) * orig_h / in_h
+            x2 = (x_c + w_box/2) * orig_w / in_w
+            y2 = (y_c + h_box/2) * orig_h / in_h
+
+            # clip to [0, orig_w] & [0, orig_h]
             x1, y1 = max(0, x1), max(0, y1)
             x2, y2 = min(orig_w, x2), min(orig_h, y2)
-            detections.append((conf, x1, y1, x2, y2))
+
+            # ensure valid box
+            if x2 > x1 + 1 and y2 > y1 + 1:
+                detections.append((conf, int(x1), int(y1), int(x2), int(y2)))
 
     if not detections:
         return []
-
-    # 2) Optional: Non‑Maximum Suppression (NMS)
+    
     detections.sort(key=lambda x: x[0], reverse=True)
     keep = []
     for conf, x1, y1, x2, y2 in detections:
-        overlap = False
         area1 = (x2-x1)*(y2-y1)
+        skip = False
         for _, kx1, ky1, kx2, ky2 in keep:
+            # intersection
             ix1, iy1 = max(x1, kx1), max(y1, ky1)
             ix2, iy2 = min(x2, kx2), min(y2, ky2)
             iw, ih = max(0, ix2-ix1), max(0, iy2-iy1)
             inter = iw * ih
             area2 = (kx2-kx1)*(ky2-ky1)
             if inter / (area1 + area2 - inter + 1e-6) > iou_thresh:
-                overlap = True
+                skip = True
                 break
-        if not overlap:
+        if not skip:
             keep.append((conf, x1, y1, x2, y2))
 
-    # 3) Crop & save each detection
+    # Crop and save
     os.makedirs("crops", exist_ok=True)
     paths = []
     for idx, (_conf, x1, y1, x2, y2) in enumerate(keep, start=1):
+        # Final sanity check
+        if x1 < 0 or y1 < 0 or x2 > orig_w or y2 > orig_h:
+            continue
         crop = original_image.crop((x1, y1, x2, y2))
         out = os.path.join("crops", f"crop_{idx}.png")
         crop.save(out)

@@ -25,56 +25,82 @@ def compute_iou(box1, box2):
     a2 = (box2[2]-box2[0])*(box2[3]-box2[1])
     return inter / (a1 + a2 - inter + 1e-6)
 
-def postprocess(output_data, original_image, conf_thresh=0.5):
-    w, h = original_image.size
-    crops = []
-    output = output_data[0]
+def postprocess(output_data, original_image, resized_size, conf_thresh=0.5, iou_thresh=0.4):
+    """
+    Parse YOLOv5-style output_data of shape (1,25200,85) and
+    return ALL person crops (class_id==0, conf>conf_thresh).
+    """
+    orig_w, orig_h = original_image.size
+    in_w,  in_h  = resized_size
 
-    print(f"[DEBUG] Output shape: {output.shape}")
-    print(f"[DEBUG] First few detections: {output[:3]}")
+    preds = output_data[0]  # (25200,85)
+    detections = []
 
-    for det in output:
-        det = [float(x) for x in det]  # Force all to float
-        
-        if len(det) > 6:
-            x_center, y_center, box_w, box_h = det[:4]
-            obj_conf = det[4]
-            class_probs = det[5:]
-            class_id = int(np.argmax(class_probs))
-            class_score = class_probs[class_id]
-            conf = obj_conf * class_score
-        else:
-            x_center, y_center, box_w, box_h, conf, class_id = det
-            conf = float(conf)
-            class_id = int(class_id)
+    # 1) collect raw boxes
+    for det in preds:
+        x_c, y_c, w_box, h_box = det[0:4].astype(float)
+        obj_conf = float(det[4])
+        class_probs = det[5:]
+        class_id   = int(np.argmax(class_probs))
+        class_score = float(class_probs[class_id])
+        conf = obj_conf * class_score
 
-        print(f"[DEBUG] conf: {conf}, class_id: {class_id}")
+        if class_id == 0 and conf > conf_thresh:
+            # convert to pixels on original image
+            x1 = int((x_c - w_box/2) * orig_w / in_w)
+            y1 = int((y_c - h_box/2) * orig_h / in_h)
+            x2 = int((x_c + w_box/2) * orig_w / in_w)
+            y2 = int((y_c + h_box/2) * orig_h / in_h)
+            x1, y1 = max(0, x1), max(0, y1)
+            x2, y2 = min(orig_w, x2), min(orig_h, y2)
+            detections.append((conf, x1, y1, x2, y2))
 
-        if conf > conf_thresh and class_id == 0:
-            x1 = int((x_center - box_w / 2) * w)
-            y1 = int((y_center - box_h / 2) * h)
-            x2 = int((x_center + box_w / 2) * w)
-            y2 = int((y_center + box_h / 2) * h)
+    if not detections:
+        return []
 
-            x1 = max(0, x1)
-            y1 = max(0, y1)
-            x2 = min(w, x2)
-            y2 = min(h, y2)
+    # 2) optional NMS to remove highly overlapping boxes
+    detections.sort(key=lambda x: x[0], reverse=True)
+    keep = []
+    for det in detections:
+        _, x1, y1, x2, y2 = det
+        area = (x2-x1)*(y2-y1)
+        overlap = False
+        for k in keep:
+            _, kx1, ky1, kx2, ky2 = k
+            # intersection
+            ix1, iy1 = max(x1, kx1), max(y1, ky1)
+            ix2, iy2 = min(x2, kx2), min(y2, ky2)
+            iw, ih = max(0, ix2-ix1), max(0, iy2-iy1)
+            inter = iw * ih
+            union = area + (kx2-kx1)*(ky2-ky1) - inter
+            if union > 0 and (inter/union) > iou_thresh:
+                overlap = True
+                break
+        if not overlap:
+            keep.append(det)
 
-            crop = original_image.crop((x1, y1, x2, y2))
-            crops.append(crop)
-
-    return crops
-
-def run_inference(image_path, output_dir="crops"):
-    os.makedirs(output_dir, exist_ok=True)
-    inp, orig, size = preprocess_image(image_path)
-    interpreter.set_tensor(input_details[0]['index'], inp)
-    interpreter.invoke()
-    out = interpreter.get_tensor(output_details[0]['index'])
-    crops = postprocess(out, orig, size)
+    # 3) crop and save each kept box
+    os.makedirs("crops", exist_ok=True)
     paths = []
-    for i, c in enumerate(crops, start=1):
-        fn = os.path.join(output_dir, f"crop_{i}.jpg")
-        c.save(fn); paths.append(fn)
+    for idx, det in enumerate(keep, start=1):
+        _, x1, y1, x2, y2 = det
+        crop = original_image.crop((x1, y1, x2, y2))
+        out_path = os.path.join("crops", f"crop_{idx}.png")
+        crop.save(out_path)
+        paths.append(out_path)
+
     return paths
+
+def run_inference(image_path):
+    """
+    Returns a list of paths to all cropped person images.
+    """
+    # 1) preprocess
+    input_data, orig_image, size = preprocess_image(image_path)
+    # 2) inference
+    interpreter.set_tensor(_input_details[0]['index'], input_data)
+    interpreter.invoke()
+    output_data = interpreter.get_tensor(_output_details[0]['index'])
+    # 3) postprocess (now returns multiple)
+    crops = postprocess(output_data, orig_image, size, conf_thresh=0.5, iou_thresh=0.4)
+    return crops

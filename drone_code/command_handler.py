@@ -155,27 +155,28 @@ class DetectCommand(Command):
     name = "DETECT"
 
     def execute(self, args, handler):
-        # 1) Capture
-        img = None
-        while img is None:
-            img = capture_photo(width=640, height=480, fmt="jpg")
-        handler.send_response(f"[INFO] Captured {img}", handler.rfm9x)
+        # capture image
+        img_path = None
+        while img_path is None:
+            img_path = capture_photo(width=640, height=640, fmt="jpg")
+        handler.send_response(f"[INFO] Captured {img_path}", handler.rfm9x)
 
-        # 2) Inference
+        # inference & cropping
         try:
             handler.send_response("[INFO] Running inference...", handler.rfm9x)
-            crops = run_inference(img, output_dir="crops")
-            if not crops:
-                handler.send_response("[RESULT] No person detected", handler.rfm9x)
+            crop_paths = run_inference(img_path)
+            if not crop_paths:
+                handler.send_response("[RESULT] No persons detected", handler.rfm9x)
             else:
-                for path in crops:
-                    size = os.path.getsize(path)
-                    handler.send_response(f"[CROP] {os.path.basename(path)} ({size} bytes)", handler.rfm9x)
+                for p in crop_paths:
+                    size = os.path.getsize(p)
+                    handler.send_response(f"[CROP] {os.path.basename(p)} ({size} bytes)", handler.rfm9x)
                 handler.send_response("[RESULT] DETECTION COMPLETE", handler.rfm9x)
         except Exception as e:
             handler.send_response(f"[ERROR] Inference failed: {e}", handler.rfm9x)
 
         handler.send_final_token()
+
 
 class CameraCommand(Command):
     name = "CAMERA"

@@ -37,10 +37,11 @@ def postprocess(output_data, original_image, conf_thresh=0.5):
         x_center, y_center, box_w, box_h = det[0:4]
         obj_conf = det[4]
         class_probs = det[5:]
-        class_id = np.argmax(class_probs)
-        class_score = class_probs[class_id]
 
-        conf = obj_conf * class_score
+        class_id = int(np.argmax(class_probs))
+        class_score = float(class_probs[class_id])
+
+        conf = float(obj_conf) * class_score
 
         if conf > conf_thresh and class_id == 0:  # class 0 = person
             x1 = int((x_center - box_w / 2) * w)

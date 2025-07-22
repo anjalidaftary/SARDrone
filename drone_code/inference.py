@@ -57,3 +57,16 @@ def postprocess(output_data, original_image, conf_thresh=0.5):
             crops.append(crop)
 
     return crops
+
+def run_inference(image_path, output_dir="crops"):
+    os.makedirs(output_dir, exist_ok=True)
+    inp, orig, size = preprocess_image(image_path)
+    interpreter.set_tensor(input_details[0]['index'], inp)
+    interpreter.invoke()
+    out = interpreter.get_tensor(output_details[0]['index'])
+    crops = postprocess(out, orig, size)
+    paths = []
+    for i, c in enumerate(crops, start=1):
+        fn = os.path.join(output_dir, f"crop_{i}.jpg")
+        c.save(fn); paths.append(fn)
+    return paths

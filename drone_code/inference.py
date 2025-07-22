@@ -4,7 +4,7 @@ from PIL import Image
 import tflite_runtime.interpreter as tflite
 
 # 1) Load your TFLite model once
-_MODEL_PATH = "best-fp16.tflite"
+_MODEL_PATH = "yolov5n.tflite"
 interpreter = tflite.Interpreter(model_path=_MODEL_PATH)
 interpreter.allocate_tensors()
 input_details, output_details = interpreter.get_input_details(), interpreter.get_output_details()

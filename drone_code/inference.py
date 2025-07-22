@@ -74,7 +74,7 @@ _input_details = None
 _output_details = None
 
 def run_inference(image_path,
-                  model_path="model.tflite",
+                  model_path="yolov5n.tflite",
                   input_size=(320, 320),
                   conf_thresh=0.5,
                   iou_thresh=0.4):

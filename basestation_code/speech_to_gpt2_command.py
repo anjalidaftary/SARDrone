@@ -109,6 +109,7 @@ def map_to_natural_language_commands(cleaned_output):
         "down": "move the left joystick downward",
         "pan_left": "move the left joystick to the left",
         "pan_right": "move the left joystick to the right",
+        "picture": "take a picture"
     }
 
     # Extract all command(time) patterns

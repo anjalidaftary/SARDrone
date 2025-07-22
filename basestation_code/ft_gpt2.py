@@ -3,7 +3,7 @@ import torch
 import re
 
 # === Load model ===
-model_path = "gpt2_v2"  # change if needed
+model_path = "gpt2_pan"  # change if needed
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = AutoModelForCausalLM.from_pretrained(model_path)
 
@@ -20,6 +20,7 @@ Available Commands:
 - PAN_RIGHT, [angle_in_degrees] (rotate right)
 - UP, [distance_in_meters]
 - DOWN, [distance_in_meters]
+- PICTURE
 
 Your Task:
 1. Analyze the user's request.
@@ -35,7 +36,7 @@ def split_instruction(text):
     return [p.strip().capitalize() for p in parts if p.strip()]
 
 # === Inference function ===
-def generate_flight_plan(user_instruction, max_new_tokens=350):
+def generate_flight_plan(user_instruction, max_new_tokens=550):
     split_instructions = split_instruction(user_instruction)
     all_commands = []
 

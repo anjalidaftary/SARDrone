@@ -155,28 +155,22 @@ class DetectCommand(Command):
     name = "DETECT"
 
     def execute(self, args, handler):
-        # 1) Capture an image
-        img_path = None
-        while img_path is None:
-            img_path = capture_photo(width=640, height=480, fmt="jpg")
-            if img_path is None:
-                time.sleep(0.5)
+        # 1) Capture
+        img = None
+        while img is None:
+            img = capture_photo(width=640, height=480, fmt="jpg")
+        handler.send_response(f"[INFO] Captured {img}", handler.rfm9x)
 
-        handler.send_response(f"[INFO] Image saved at {img_path}", handler.rfm9x)
-
-        # 2) Run TFLite inference
+        # 2) Inference
         try:
             handler.send_response("[INFO] Running inference...", handler.rfm9x)
-            crop_paths = run_inference(img_path, output_dir="crops", conf_threshold=0.5)
-
-            if not crop_paths:
-                handler.send_response("[RESULT] No persons detected", handler.rfm9x)
+            crops = run_inference(img, output_dir="crops")
+            if not crops:
+                handler.send_response("[RESULT] No person detected", handler.rfm9x)
             else:
-                # Send back each crop filename and size
-                for cp in crop_paths:
-                    size = os.path.getsize(cp)
-                    handler.send_response(f"[CROP] {os.path.basename(cp)} ({size} bytes)", handler.rfm9x)
-                    # Optionally: you could chunk-and-send the actual crop here
+                for path in crops:
+                    size = os.path.getsize(path)
+                    handler.send_response(f"[CROP] {os.path.basename(path)} ({size} bytes)", handler.rfm9x)
                 handler.send_response("[RESULT] DETECTION COMPLETE", handler.rfm9x)
         except Exception as e:
             handler.send_response(f"[ERROR] Inference failed: {e}", handler.rfm9x)

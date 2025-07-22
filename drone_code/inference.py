@@ -3,44 +3,60 @@ import numpy as np
 import tflite_runtime.interpreter as tflite
 import os
 
-# Load & allocate once at import time
-_MODEL_PATH = "best-fp16.tflite"
-_interpreter = tflite.Interpreter(model_path=_MODEL_PATH)
-_interpreter.allocate_tensors()
-_input_details  = _interpreter.get_input_details()
-_output_details = _interpreter.get_output_details()
+interpreter = tflite.Interpreter(model_path="yolov5n.tflite")
+interpreter.allocate_tensors()
+input_details  = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
 
-def preprocess_image(img_path, target_size=(640, 640)):
-    img = Image.open(img_path).convert("RGB").resize(target_size)
-    arr = np.array(img, dtype=np.float32) / 255.0
-    return np.expand_dims(arr, axis=0), img
+def preprocess_image(img_path):
+    img = Image.open(img_path).convert("RGB")
+    img_resized = img.resize((640, 640))
+    img_np = np.array(img_resized, dtype=np.float32) / 255.0
+    return np.expand_dims(img_np, 0), img, img_resized.size
 
-def postprocess(output_data, original_image, conf_threshold=0.5):
-    w, h = original_image.size
-    crops = []
-    # output_data shape assumed (1, N, 6) → [x_center, y_center, w, h, conf, class_id]
-    for det in output_data[0]:
-        x_c, y_c, bw, bh, conf, cls = det
-        if conf >= conf_threshold and int(cls) == 0:  # person
-            x1 = int((x_c - bw/2) * w)
-            y1 = int((y_c - bh/2) * h)
-            x2 = int((x_c + bw/2) * w)
-            y2 = int((y_c + bh/2) * h)
-            x1, y1 = max(0, x1), max(0, y1)
-            x2, y2 = min(w, x2), min(h, y2)
-            crops.append(original_image.crop((x1, y1, x2, y2)))
-    return crops
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
 
-def run_inference(img_path, output_dir="crops", conf_threshold=0.5):
+def compute_iou(box1, box2):
+    xa = max(box1[0], box2[0]); ya = max(box1[1], box2[1])
+    xb = min(box1[2], box2[2]); yb = min(box1[3], box2[3])
+    inter = max(0, xb - xa) * max(0, yb - ya)
+    a1 = (box1[2]-box1[0])*(box1[3]-box1[1])
+    a2 = (box2[2]-box2[0])*(box2[3]-box2[1])
+    return inter / (a1 + a2 - inter + 1e-6)
+
+def postprocess(preds, orig_img, resized_size, conf_thresh=0.4, iou_thresh=0.5):
+    boxes = []
+    img_w, img_h = orig_img.size
+    in_w, in_h = resized_size
+    for x, y, w, h, conf, cls in preds[0]:
+        if conf < conf_thresh or int(cls) != 0:
+            continue
+        # scale back to original
+        sx, sy = img_w/in_w, img_h/in_h
+        x1 = int((x - w/2)*sx); y1 = int((y - h/2)*sy)
+        x2 = int((x + w/2)*sx); y2 = int((y + h/2)*sy)
+        x1, y1 = max(0,x1), max(0,y1)
+        x2, y2 = min(img_w,x2), min(img_h,y2)
+        boxes.append([x1,y1,x2,y2,conf])
+    # nms
+    boxes.sort(key=lambda b: b[4], reverse=True)
+    final = []
+    while boxes:
+        best = boxes.pop(0); final.append(best)
+        boxes = [b for b in boxes if compute_iou(best,b) < iou_thresh]
+    # crop
+    return [ orig_img.crop((x1,y1,x2,y2)) for x1,y1,x2,y2,_ in final ]
+
+def run_inference(image_path, output_dir="crops"):
     os.makedirs(output_dir, exist_ok=True)
-    input_data, orig = preprocess_image(img_path)
-    _interpreter.set_tensor(_input_details[0]['index'], input_data)
-    _interpreter.invoke()
-    output_data = _interpreter.get_tensor(_output_details[0]['index'])
-    crops = postprocess(output_data, orig, conf_threshold)
+    inp, orig, size = preprocess_image(image_path)
+    interpreter.set_tensor(input_details[0]['index'], inp)
+    interpreter.invoke()
+    out = interpreter.get_tensor(output_details[0]['index'])
+    crops = postprocess(out, orig, size)
     paths = []
-    for i, crop in enumerate(crops, start=1):
+    for i, c in enumerate(crops, start=1):
         fn = os.path.join(output_dir, f"crop_{i}.jpg")
-        crop.save(fn)
-        paths.append(fn)
+        c.save(fn); paths.append(fn)
     return paths

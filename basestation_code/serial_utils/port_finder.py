@@ -21,7 +21,7 @@ def find_adafruit_port():
     # Specific search for Feather
     LOG_PATH = Path(__file__).resolve().parent.parent / "terminal.txt"
     pattern = r"\b(\d+):\s*/dev/cu\.usbmodem\d+.*Feather RP2040 RFM"
-    with open(LOG_PATH, "r") as f:
+    with open(LOG_PATH, "r", encoding="utf-8") as f:
         for line in f:
             match = re.search(pattern, line)
             if match:

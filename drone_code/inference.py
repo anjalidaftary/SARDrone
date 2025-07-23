@@ -4,7 +4,7 @@ from PIL import Image
 from tflite_runtime.interpreter import Interpreter
 
 # Load TFLite model
-interpreter = Interpreter(model_path=os.path.join(os.path.dirname(__file__), "yolov5n.tflite"))
+interpreter = Interpreter(model_path=os.path.join(os.path.dirname(__file__), "best.tflite"))
 interpreter.allocate_tensors()
 
 # Get model I/O details
@@ -27,14 +27,24 @@ def preprocess_image(img_path):
 
 def postprocess(output_data, original_image, conf_thresh=0.5):
     """
-    Parse model output of shape [1, N, 6], extract person detections and return list of crop file paths.
+    Parse model output and extract person detections, returning list of crop file paths.
+    Supports output_data shape [1, N, >=6].
     """
     w, h = original_image.size
     crops = []
     paths = []
 
-    for det in output_data[0]:  # [x_center, y_center, box_w, box_h, conf, class_id]
-        x_c, y_c, bw, bh, conf, cls = det
+    # Debug: show output vector size
+    if output_data.ndim != 3:
+        print(f"[ERROR] Unexpected output_data shape: {output_data.shape}")
+        return []
+
+    for det in output_data[0]:
+        # Unpack first 6 values (ignore extras)
+        x_c, y_c, bw, bh, conf, cls = det[:6]
+        # Debug: show det length
+        # print(f"[DEBUG] det vector length: {len(det)}")
+
         if conf > conf_thresh and int(cls) == 0:
             # Convert to pixel coordinates
             x1 = int((x_c - bw/2) * w)
@@ -48,11 +58,12 @@ def postprocess(output_data, original_image, conf_thresh=0.5):
             crop = original_image.crop((x1, y1, x2, y2))
             crops.append(crop)
 
-    # Ensure output directory
+    # Ensure output directory exists
     os.makedirs("crops", exist_ok=True)
     for idx, crop in enumerate(crops, start=1):
         out_path = os.path.join("crops", f"crop_{idx}.jpg")
         crop.save(out_path)
+        print(f"[DEBUG] saved {out_path}")
         paths.append(out_path)
     return paths
 
@@ -69,6 +80,6 @@ def run_inference(image_path, conf_thresh=0.5):
     # 2) inference
     interpreter.set_tensor(input_details[0]['index'], input_data)
     interpreter.invoke()
-    output_data = interpreter.get_tensor(output_details[0]['index'])  # Expect [1, N, 6]
+    output_data = interpreter.get_tensor(output_details[0]['index'])  # Expect [1, N, >=6]
     # 3) postprocess + save
     return postprocess(output_data, orig, conf_thresh=conf_thresh)

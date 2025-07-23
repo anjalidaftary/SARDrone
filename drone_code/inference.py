@@ -4,7 +4,7 @@ from PIL import Image
 from tflite_runtime.interpreter import Interpreter
 
 # Load TFLite model
-interpreter = Interpreter(model_path=os.path.join(os.path.dirname(__file__), "best.tflite"))
+interpreter = Interpreter(model_path=os.path.join(os.path.dirname(__file__), "yolov5n.tflite"))
 interpreter.allocate_tensors()
 
 # Get model I/O details

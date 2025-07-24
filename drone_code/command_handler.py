@@ -141,18 +141,17 @@ class DetectCommand(Command):
                     stamp(f"{status} {base} (send time: {send_end - send_start:0.2f}s)")
 
                 stamp("DETECT pipeline complete")
+                handler.send_response("[RESULT] DETECTION COMPLETE", handler.rfm9x)
 
         except Exception as e:
             stamp(f"ERROR during pipeline: {e}")
 
         # 3) end transmission
         handler.send_final_token()
+
+        # 4) final total elapsed
         total = time.time() - t0
         handler.send_response(f"[{total:0.2f}] Total elapsed", handler.rfm9x)
-
-        # end transmission
-        handler.send_final_token()
-
 
 class CameraCommand(Command):
     name = "CAMERA"

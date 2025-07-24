@@ -112,7 +112,7 @@ class DetectCommand(Command):
             img_path = capture_photo(width=640, height=640, fmt="jpg")
         handler.send_response(f"[INFO] Captured {img_path}", handler.rfm9x)
 
-        # 2) inference & crop
+        # 2) inference, crop & send via LoRa
         try:
             handler.send_response("[INFO] Running inference...", handler.rfm9x)
             crop_paths = run_inference(img_path, conf_thresh=0.5)
@@ -120,14 +120,16 @@ class DetectCommand(Command):
                 handler.send_response("[RESULT] No persons detected", handler.rfm9x)
             else:
                 for p in crop_paths:
-                    size = os.path.getsize(p)
-                    handler.send_response(f"[CROP] {os.path.basename(p)} ({size} bytes)", handler.rfm9x)
+                    # Convert to base64 for LoRa transmission
+                    b64 = convert_image(p, bit_depth=4, size=(64, 64))
+                    handler.send_response(f"[INFO] Sending {os.path.basename(p)}", handler.rfm9x)
+                    # send_file takes (base64_string, handler)
+                    success = send_file(b64, handler)
+                    status = "[SENT]" if success else "[SEND FAILED]"
+                    handler.send_response(f"{status} {os.path.basename(p)}", handler.rfm9x)
                 handler.send_response("[RESULT] DETECTION COMPLETE", handler.rfm9x)
         except Exception as e:
             handler.send_response(f"[ERROR] Inference failed: {e}", handler.rfm9x)
-
-        # 3) end transmission
-        handler.send_final_token()
 
 class CameraCommand(Command):
     name = "CAMERA"

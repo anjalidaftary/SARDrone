@@ -113,7 +113,7 @@ class DetectCommand(Command):
         # 1) capture
         img_path = None
         while img_path is None:
-            img_path = capture_photo(width=640, height=640, fmt="jpg")
+            img_path = capture_photo(width=640, height=640, fmt="png")
         capture_time = datetime.now()
         handler.send_response(f"[TIME] Image captured at {capture_time.isoformat()}", handler.rfm9x)
 

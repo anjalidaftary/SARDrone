@@ -61,8 +61,8 @@ def postprocess(output_data, original_image, conf_thresh=0.5):
     # Ensure output directory exists
     os.makedirs("crops", exist_ok=True)
     for idx, crop in enumerate(crops, start=1):
-        out_path = os.path.join("crops", f"crop_{idx}.jpg")
-        crop.save(out_path)
+        out_path = os.path.join("crops", f"crop_{idx}.png")
+        crop.save(out_path, format="png")
         print(f"[DEBUG] saved {out_path}")
         paths.append(out_path)
     return paths

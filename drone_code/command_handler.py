@@ -107,44 +107,48 @@ class DetectCommand(Command):
 
     def execute(self, args, handler):
         # start overall timer
-        start_time = datetime.now()
-        handler.send_response(f"[TIME] Command received at {start_time.isoformat()}", handler.rfm9x)
+        t0 = time.time()
+        def stamp(msg):
+            elapsed = time.time() - t0
+            handler.send_response(f"[{elapsed:0.2f}] {msg}", handler.rfm9x)
+
+        # 0) command received
+        stamp("Command received")
 
         # 1) capture
         img_path = None
         while img_path is None:
             img_path = capture_photo(width=640, height=640, fmt="png")
-        capture_time = datetime.now()
-        handler.send_response(f"[TIME] Image captured at {capture_time.isoformat()}", handler.rfm9x)
+        stamp(f"Image captured: {os.path.basename(img_path)}")
 
         # 2) inference, crop & send via LoRa
         try:
-            infer_start = datetime.now()
-            handler.send_response(f"[TIME] Starting inference at {infer_start.isoformat()}", handler.rfm9x)
+            stamp("Starting inference")
             crop_paths = run_inference(img_path, conf_thresh=0.5)
-            infer_end = datetime.now()
-            handler.send_response(f"[TIME] Inference completed at {infer_end.isoformat()}", handler.rfm9x)
+            stamp(f"Inference completed, {len(crop_paths)} crop(s) found")
 
             if not crop_paths:
-                handler.send_response("[RESULT] No persons detected", handler.rfm9x)
+                stamp("No persons detected")
             else:
                 for p in crop_paths:
                     base = os.path.basename(p)
-                    handler.send_response(f"[INFO] Sending {base}", handler.rfm9x)
-                    # Convert to base64 for LoRa transmission (outputs PNG base64)
-                    b64 = convert_image(p, bit_depth=4, size=(64, 64))
-                    send_start = datetime.now()
+                    stamp(f"Preparing to send {base}")
+                    b64  = convert_image(p, bit_depth=4, size=(64, 64))
+                    send_start = time.time()
                     success = send_file(b64, handler)
-                    send_end = datetime.now()
-                    status = "[SENT]" if success else "[SEND FAILED]"
-                    handler.send_response(f"{status} {base}", handler.rfm9x)
-                    handler.send_response(f"[TIME] Sent {base} at {send_end.isoformat()} (started at {send_start.isoformat()})", handler.rfm9x)
+                    send_end = time.time()
+                    status = "SENT" if success else "SEND FAILED"
+                    stamp(f"{status} {base} (send time: {send_end - send_start:0.2f}s)")
 
-                complete_time = datetime.now()
-                handler.send_response(f"[TIME] DETECT pipeline complete at {complete_time.isoformat()}", handler.rfm9x)
-                handler.send_response(f"[DURATION] Total elapsed: {complete_time - start_time}", handler.rfm9x)
+                stamp("DETECT pipeline complete")
+
         except Exception as e:
-            handler.send_response(f"[ERROR] Inference failed: {e}", handler.rfm9x)
+            stamp(f"ERROR during pipeline: {e}")
+
+        # 3) end transmission
+        handler.send_final_token()
+        total = time.time() - t0
+        handler.send_response(f"[{total:0.2f}] Total elapsed", handler.rfm9x)
 
         # end transmission
         handler.send_final_token()

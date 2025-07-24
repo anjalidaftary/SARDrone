@@ -102,55 +102,6 @@ class EchoCommand(Command):
             time.sleep(0.1)
             handler.send_final_token()
 
-
-class ConfigCommand(Command):
-    name = "CONFIG"
-
-    def execute(self, args, handler):
-        try:
-            if len(args) == 1 and args[0].upper() == "HELP":
-                response = (
-                    "CONFIG OPTIONS:\n"
-                    "- OUTPUT_LENGTH <32-252>\n"
-                    "- LOGGING <true|false>\n"
-                    "- TIMESTAMP <true|false>\n"
-                    "- CHUNKING <true|false>"
-                )
-            elif len(args) < 2:
-                raise ValueError("Usage: CONFIG <PARAM> <VALUE>")
-
-            else:
-                param, value = args[0].upper(), args[1].lower()
-
-                if param == "OUTPUT_LENGTH":
-                    new_size = int(value)
-                    if 32 <= new_size <= 252:
-                        handler.max_packet_size = new_size
-                        response = f"Set OUTPUT_LENGTH to {new_size} bytes"
-                    else:
-                        response = f"Invalid OUTPUT_LENGTH: {new_size} (must be 32-252)"
-
-                elif param == "LOGGING":
-                    handler.logging_enabled = value in ["true", "1", "on"]
-                    response = f"{'Enabled' if handler.logging_enabled else 'Disabled'} LOGGING"
-
-                elif param == "TIMESTAMP":
-                    handler.timestamp_enabled = value in ["true", "1", "on"]
-                    response = f"{'Enabled' if handler.timestamp_enabled else 'Disabled'} TIMESTAMP"
-
-                elif param == "CHUNKING":
-                    handler.chunking_enabled = value in ["true", "1", "on"]
-                    response = f"{'Enabled' if handler.chunking_enabled else 'Disabled'} CHUNKING"
-
-                else:
-                    response = f"Unknown CONFIG parameter: {param}"
-
-        except Exception as e:
-            response = f"CONFIG error: {e}"
-
-        handler.send_response(response)
-        handler.send_final_token()
-
 class DetectCommand(Command):
     name = "DETECT"
 
@@ -251,46 +202,6 @@ class ResendCommand(Command):
         except Exception as e:
             handler.send_response(f"[RESEND ERROR] {e}", handler.rfm9x)
 
-class RunCommand(Command):
-    name = "RUN"
-
-    def execute(self, args, handler):
-        if not args:
-            handler.send_response("Usage: RUN <command> [args...]")
-            handler.send_final_token()
-            return
-
-        try:
-            # Join the args into a full shell command
-            shell_cmd = " ".join(args)
-            handler.send_response(f"→ Executing: {shell_cmd}")
-
-            # Use Popen to stream output line-by-line
-            process = subprocess.Popen(
-                shell_cmd,
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                universal_newlines=True,
-                bufsize=1
-            )
-
-            # Read lines from stdout as they come
-            for line in iter(process.stdout.readline, ''):
-                line = line.strip()
-                if line:
-                    handler.send_response(line)
-
-            process.stdout.close()
-            process.wait()
-
-        except subprocess.TimeoutExpired:
-            handler.send_response("[ERROR] Command timed out.")
-        except Exception as e:
-            handler.send_response(f"[ERROR] Failed to execute: {e}")
-
-        handler.send_final_token()
-
 
 class CommandHandler:
     def __init__(self, rfm9x):
@@ -310,11 +221,9 @@ class CommandHandler:
             HelpCommand(),
             HistoryCommand(),
             EchoCommand(),
-            ConfigCommand(),
             DetectCommand(),
             CameraCommand(),
-            ResendCommand(), 
-            RunCommand(),
+            ResendCommand(),
         ])
 
 

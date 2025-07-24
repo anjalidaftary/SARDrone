@@ -106,30 +106,49 @@ class DetectCommand(Command):
     name = "DETECT"
 
     def execute(self, args, handler):
+        # start overall timer
+        start_time = datetime.now()
+        handler.send_response(f"[TIME] Command received at {start_time.isoformat()}", handler.rfm9x)
+
         # 1) capture
         img_path = None
         while img_path is None:
             img_path = capture_photo(width=640, height=640, fmt="jpg")
-        handler.send_response(f"[INFO] Captured {img_path}", handler.rfm9x)
+        capture_time = datetime.now()
+        handler.send_response(f"[TIME] Image captured at {capture_time.isoformat()}", handler.rfm9x)
 
         # 2) inference, crop & send via LoRa
         try:
-            handler.send_response("[INFO] Running inference...", handler.rfm9x)
+            infer_start = datetime.now()
+            handler.send_response(f"[TIME] Starting inference at {infer_start.isoformat()}", handler.rfm9x)
             crop_paths = run_inference(img_path, conf_thresh=0.5)
+            infer_end = datetime.now()
+            handler.send_response(f"[TIME] Inference completed at {infer_end.isoformat()}", handler.rfm9x)
+
             if not crop_paths:
                 handler.send_response("[RESULT] No persons detected", handler.rfm9x)
             else:
                 for p in crop_paths:
-                    # Convert to base64 for LoRa transmission
+                    base = os.path.basename(p)
+                    handler.send_response(f"[INFO] Sending {base}", handler.rfm9x)
+                    # Convert to base64 for LoRa transmission (outputs PNG base64)
                     b64 = convert_image(p, bit_depth=4, size=(64, 64))
-                    handler.send_response(f"[INFO] Sending {os.path.basename(p)}", handler.rfm9x)
-                    # send_file takes (base64_string, handler)
+                    send_start = datetime.now()
                     success = send_file(b64, handler)
+                    send_end = datetime.now()
                     status = "[SENT]" if success else "[SEND FAILED]"
-                    handler.send_response(f"{status} {os.path.basename(p)}", handler.rfm9x)
-                handler.send_response("[RESULT] DETECTION COMPLETE", handler.rfm9x)
+                    handler.send_response(f"{status} {base}", handler.rfm9x)
+                    handler.send_response(f"[TIME] Sent {base} at {send_end.isoformat()} (started at {send_start.isoformat()})", handler.rfm9x)
+
+                complete_time = datetime.now()
+                handler.send_response(f"[TIME] DETECT pipeline complete at {complete_time.isoformat()}", handler.rfm9x)
+                handler.send_response(f"[DURATION] Total elapsed: {complete_time - start_time}", handler.rfm9x)
         except Exception as e:
             handler.send_response(f"[ERROR] Inference failed: {e}", handler.rfm9x)
+
+        # end transmission
+        handler.send_final_token()
+
 
 class CameraCommand(Command):
     name = "CAMERA"

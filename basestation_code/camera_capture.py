@@ -1,6 +1,8 @@
 from serial_utils.serial_interface import SerialInterface
 from pathlib import Path
 from reconstructor import extract_chunks, reconstruct_binary, reconstruct_text
+import time
+import shutil
 
 LOG_PATH = Path(__file__).resolve().parent / "terminal.txt"
 
@@ -28,15 +30,11 @@ def camera_capture():
 def detect_capture():
     """
     Sends the DETECT command to the drone, then automatically
-    reconstructs any cropped-person images that come back.
+    reconstructs any cropped-person images that come back,
+    and moves each reconstructed PNG into detect_crops/crop_1.png, etc.
     """
-    from serial_utils.serial_interface import SerialInterface
-    from reconstructor import extract_chunks, reconstruct_text, reconstruct_binary
-    from pathlib import Path
-    import time
-
-    DETECT_LOG = Path(__file__).resolve().parent / "terminal.txt"
-    OUT_DIR   = Path(__file__).resolve().parent / "detect_crops"
+    DETECT_LOG = LOG_PATH
+    OUT_DIR   = DETECT_LOG.parent / "detect_crops"
 
     # 1) spin up serial I/O
     print("Starting DETECT sequence over serial…")
@@ -51,7 +49,7 @@ def detect_capture():
         # 3) wait for the Pi to finish streaming
         timeout = time.time() + 60  # seconds
         while True:
-            data = DETECT_LOG.read_text()
+            data = DETECT_LOG.read_text(encoding="utf-8", errors="replace")
             if "[RESULT] DETECTION COMPLETE" in data:
                 break
             if time.time() > timeout:
@@ -63,19 +61,36 @@ def detect_capture():
         # 4) tear down serial I/O
         serial_interface.close()
 
-    # 5) reconstruct any base64 or hex chunks
-    b64, hx = extract_chunks()
-    OUT_DIR.mkdir(exist_ok=True)
+    # 5) clear any old reconstructions
+    for old in DETECT_LOG.parent.glob("reconstructed_*.png"):
+        old.unlink()
 
+    # 6) reconstruct any base64 or hex chunks
+    b64, hx = extract_chunks()
     if b64:
-        # send an output directory so it doesn’t stomp your screenshot file
-        reconstruct_text(output_dir=str(OUT_DIR))
+        reconstruct_text()       # no args
     elif hx:
-        reconstruct_binary(output_dir=str(OUT_DIR))
+        reconstruct_binary()     
     else:
         print("[✗] No DETECT image data found in terminal.txt")
+        return
 
-    # 6) clear the log for next time
+    # 7) move each reconstructed image into detect_crops/
+    OUT_DIR.mkdir(exist_ok=True)
+    recon_files = sorted(DETECT_LOG.parent.glob("reconstructed_*.png"))
+    if not recon_files:
+        print("[✗] Reconstruction succeeded but no files found.")
+        return
+
+    for idx, src in enumerate(recon_files, start=1):
+        dst = OUT_DIR / f"crop_{idx}.png"
+        # if a file with that name already exists, overwrite it
+        if dst.exists():
+            dst.unlink()
+        shutil.move(str(src), str(dst))
+        print(f"[✓] Moved {src.name} → detect_crops/{dst.name}")
+
+    # 8) clear the log for next time
     DETECT_LOG.write_text("")
     print(f"[✓] All DETECT crops written to {OUT_DIR}/")
 #camera_capture()
